@@ -43,3 +43,6 @@ tests/_support/_generated
 
 #vagrant folder
 /.vagrant
+# local DB credentials
+/config/db.php
+
