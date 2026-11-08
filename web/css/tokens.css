@@ -1,0 +1,80 @@
+:root {
+  /* Surfaces */
+  --c-bg:            #F5F7F2;
+  --c-bg-glow:       #DDF3E4;
+  --c-surface:       #FFFFFF;
+  --c-surface-2:     #EEF2EC;
+  --c-line:          #E1E7DF;
+  --c-line-strong:   #CBD4C8;
+
+  /* Text */
+  --c-text:          #12211A;
+  --c-text-2:        #56665D;
+  --c-text-3:        #8A978F;
+  --c-on-accent:     #FFFFFF;
+
+  /* Accent */
+  --c-accent:        #0E8A4F;
+  --c-accent-strong: #0A6B3D;
+  --c-accent-soft:   #E1F4E8;
+  --c-accent-glow:   rgba(14, 138, 79, .28);
+
+  /* Semantics */
+  --c-income:        #0E8A4F;
+  --c-expense:       #12211A;
+  --c-transfer:      #3D6B8F;
+  --c-warn:          #C98A12;
+  --c-danger:        #CF3B32;
+  --c-danger-soft:   #FBE7E5;
+
+  --bg-app:
+    radial-gradient(120% 60% at 50% -10%, var(--c-bg-glow) 0%, transparent 60%),
+    var(--c-bg);
+
+  /* Radii */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 28px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --sh-1:   0 1px 2px rgba(18, 33, 26, .06);
+  --sh-2:   0 6px 20px -8px rgba(18, 33, 26, .18);
+  --sh-nav: 0 -8px 24px -12px rgba(18, 33, 26, .16);
+  --sh-fab: 0 10px 24px -6px var(--c-accent-glow);
+
+  /* Spacing */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px;
+  --gutter: 20px;
+
+  /* Fonts */
+  --f-display: "Unbounded", "Onest", sans-serif;
+  --f-body:    "Onest", sans-serif;
+
+  /* Type scale */
+  --t-hero:   600 44px/1.0  var(--f-display);
+  --t-brand:  700 20px/1.0  var(--f-display);
+  --t-h1:     600 26px/1.15 var(--f-display);
+  --t-h2:     600 18px/1.25 var(--f-body);
+  --t-amount: 600 17px/1.2  var(--f-body);
+  --t-body:   400 16px/1.4  var(--f-body);
+  --t-body-m: 500 16px/1.4  var(--f-body);
+  --t-small:  400 14px/1.35 var(--f-body);
+  --t-cap:    500 12px/1.2  var(--f-body);
+  --t-tab:    500 11px/1.0  var(--f-body);
+
+  /* Shell */
+  --shell-max: 430px;
+  --nav-h: 64px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+
+  /* Motion */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --d-fast: 140ms;
+  --d-med: 240ms;
+  --d-slow: 380ms;
+}

@@ -45,4 +45,10 @@ tests/_support/_generated
 /.vagrant
 # local DB credentials
 /config/db.php
+/config/secrets.php
 
+
+# archives / dumps
+/*.zip
+/backup.zip
+/score.zip

@@ -4,94 +4,59 @@ declare(strict_types=1);
 
 namespace app\models;
 
-use yii\base\BaseObject;
+use Yii;
+use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
-class User extends BaseObject implements IdentityInterface
+/**
+ * @property int $id
+ * @property string $username
+ * @property string $password password hash
+ * @property string $role
+ */
+class User extends ActiveRecord implements IdentityInterface
 {
-    public int|string $id = '';
-    public string $username = '';
-    public string $passwordHash = '';
-    public string $authKey = '';
-    public string $accessToken = '';
-    private static array $_users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            // password: admin
-            'passwordHash' => '$2y$13$gYAywKSkhfZDq9FLNdm7buKnvlRxDexf5xipSMAxQPDUxpaptmZJu',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            // password: demo
-            'passwordHash' => '$2y$13$alRLq1PGVMlGYwS/Y3iy3ewQns1Z8ol8Iq6Zb5k7ZwEhblA1aL29y',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-    /**
-     * {@inheritdoc}
-     */
-    public static function findIdentity($id): static|null
+    public static function tableName(): string
     {
-        return isset(self::$_users[$id]) ? new static(self::$_users[$id]) : null;
+        return '{{%user}}';
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public static function findIdentityByAccessToken($token, $type = null): static|null
+    public static function findIdentity($id): ?static
     {
-        foreach (self::$_users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
+        return static::findOne((int) $id);
+    }
 
+    public static function findIdentityByAccessToken($token, $type = null): ?static
+    {
         return null;
     }
 
-    /**
-     * Finds user by username
-     *
-     * @param string $username
-     * @return static|null
-     */
-    public static function findByUsername(string $username): static|null
+    public static function findByUsername(string $username): ?static
     {
-        foreach (self::$_users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
+        return static::findOne(['username' => $username]);
+    }
 
-        return null;
+    public function getId(): int
+    {
+        return (int) $this->id;
     }
 
     /**
-     * {@inheritdoc}
+     * The table has no auth_key column, so the key is derived from the password hash:
+     * changing the password invalidates every "remember me" cookie.
      */
-    public function getId(): int|string
+    public function getAuthKey(): string
     {
-        return $this->id;
+        return hash_hmac('sha256', $this->id . '|' . $this->password, Yii::$app->request->cookieValidationKey);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getAuthKey(): string|null
-    {
-        return $this->authKey;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function validateAuthKey($authKey): bool
     {
-        return $this->authKey === $authKey;
+        return is_string($authKey) && hash_equals($this->getAuthKey(), $authKey);
+    }
+
+    public function validatePassword(string $password): bool
+    {
+        return Yii::$app->security->validatePassword($password, $this->password);
     }
 }

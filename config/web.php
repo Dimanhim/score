@@ -2,11 +2,15 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
+$secrets = require __DIR__ . '/secrets.php';
 
 $config = [
-    'id' => 'basic',
+    'id' => 'saldo',
+    'name' => 'Сальдо',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
+    'language' => 'ru-RU',
+    'timeZone' => 'Europe/Moscow',
     'container' => [
         'singletons' => [
             \yii\mail\MailerInterface::class => [
@@ -23,8 +27,8 @@ $config = [
     ],
     'components' => [
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-            'cookieValidationKey' => 'ZRAnQlR31AHEIfFW9Q_IL3cntS2aQsZ0',
+            'cookieValidationKey' => $secrets['cookieValidationKey'],
+            'baseUrl' => '',
         ],
         'cache' => [
             'class' => \yii\caching\FileCache::class,
@@ -32,6 +36,7 @@ $config = [
         'user' => [
             'identityClass' => \app\models\User::class,
             'enableAutoLogin' => true,
+            'loginUrl' => ['site/login'],
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -47,14 +52,21 @@ $config = [
             ],
         ],
         'db' => $db,
-        /*
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                '' => 'site/index',
+                'login' => 'site/login',
+                'logout' => 'site/logout',
+                'more' => 'site/more',
+                'operations' => 'operation/index',
+                'accounts' => 'account/index',
+                '<controller:(cost|income|transfer)>/new' => '<controller>/create',
+                '<controller:(cost|income)>/<id:\d+>' => '<controller>/update',
+                '<controller:(cost|income)>/<id:\d+>/delete' => '<controller>/delete',
             ],
         ],
-        */
     ],
     'params' => $params,
 ];

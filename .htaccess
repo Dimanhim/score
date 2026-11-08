@@ -1,0 +1,4 @@
+DirectoryIndex /web/index.php
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/web [NC]
+RewriteRule ^(.*)$ /web/$1 [L]

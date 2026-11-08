@@ -1,207 +1,99 @@
 <?php
 
+declare(strict_types=1);
+
 /** @var yii\web\View $this */
+/** @var app\models\Budget $budget */
+/** @var array $recent */
+/** @var array $categories */
+/** @var array<int, string> $accounts */
 
-use yii\helpers\Html;
+use app\helpers\Dates;
+use app\helpers\Money;
+use yii\helpers\Url;
 
-$this->title = 'My Yii Application';
-$this->params['meta_description'] = 'A high-performance PHP framework best for developing web applications. Fast, secure, and professional.';
-$this->params['meta_keywords'] = 'yii, yii2, php, framework, web application, high-performance';
+$this->title = 'Главная';
+
+$progressClass = static fn (float $ratio): string => $ratio > 1 ? ' progress--over' : ($ratio > .8 ? ' progress--warn' : '');
+$width = static fn (float $ratio): string => round(min(1, $ratio) * 100, 1) . '%';
+$todayRatio = $budget->todayRatio();
+$limitRatio = $budget->limitRatio();
+$maxCategory = $categories ? max(array_column($categories, 'sum')) : 0;
 ?>
-<div class="site-index">
+<header class="topbar">
+    <span class="brand">Сальдо</span>
+    <span class="period-chip" title="Период бюджета">
+        <?= Dates::short($budget->periodBegin) ?> — <?= Dates::short($budget->periodEnd - 1) ?>
+    </span>
+</header>
 
-    <!-- Hero banner with Yii gradient -->
-    <div class="hero-banner text-white rounded-4 p-5 mb-4 position-relative overflow-hidden">
-        <?= Html::img(Yii::getAlias('@web/images/yii3_full_white_for_dark.svg'), [
-            'alt' => '',
-            'class' => 'd-none d-lg-block position-absolute hero-logo',
-        ]) ?>
-        <div class="position-relative">
-            <h1 class="display-5 fw-bold mb-3">Build with Yii Framework</h1>
-            <p class="lead opacity-75 mb-4 hero-lead">
-                A high-performance PHP framework best for developing web applications.
-                Fast, secure, and professional.
-            </p>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= Html::a(
-                    'Get Started',
-                    'https://www.yiiframework.com/doc/guide/2.0/en/start-installation',
-                    [
-                        'class' => 'btn btn-light btn-lg fw-semibold px-4',
-                        'rel' => 'noopener',
-                        'target' => '_blank',
-                    ],
-                ) ?>
-                <?= Html::a(
-                    'API Reference',
-                    'https://www.yiiframework.com/doc/api/2.0',
-                    [
-                        'class' => 'btn btn-outline-light btn-lg px-4',
-                        'rel' => 'noopener',
-                        'target' => '_blank',
-                    ],
-                ) ?>
-            </div>
+<section class="hero">
+    <p class="eyebrow">Можно тратить</p>
+    <p class="hero__value<?= $budget->available < 0 ? ' is-negative' : '' ?>"><?= Money::html($budget->available) ?></p>
+    <p class="hero__meta">
+        на счетах <b><?= Money::plain($budget->onAccounts) ?></b>
+        <?php if ($budget->debt > 0): ?> · долг по кредиткам <b><?= Money::plain($budget->debt) ?></b><?php endif ?>
+        · в резерве <b><?= Money::plain($budget->reserved) ?></b>
+    </p>
+</section>
+
+<?php if ($budget->limit > 0): ?>
+    <a class="card limit" href="<?= Url::to(['operation/index', 'type' => 'cost']) ?>">
+        <div class="limit__head">
+            <span class="limit__title">Сегодня</span>
+            <span class="limit__value">
+                <?= Money::html($budget->spentToday) ?>
+                <span class="of">из <?= Money::plain($budget->todayAllowance) ?></span>
+            </span>
         </div>
+        <div class="progress<?= $progressClass($todayRatio) ?>">
+            <div class="progress__bar" style="width: <?= $width($todayRatio) ?>"></div>
+        </div>
+        <p class="limit__foot">
+            <?php if ($budget->periodOver): ?>
+                Период закончился — обновите его в настройках
+            <?php else: ?>
+                За период <?= Money::html($budget->spent) ?> из <?= Money::plain($budget->limit) ?>
+                · осталось дней: <?= $budget->daysLeft ?>
+            <?php endif ?>
+        </p>
+        <div class="progress<?= $progressClass($limitRatio) ?>">
+            <div class="progress__bar" style="width: <?= $width($limitRatio) ?>"></div>
+        </div>
+    </a>
+<?php endif ?>
+
+<section class="section">
+    <div class="section__head">
+        <h2 class="h2">Последние</h2>
+        <a class="link" href="<?= Url::to(['operation/index']) ?>">Все</a>
     </div>
-
-    <!-- Extensions grid -->
-    <div class="row g-3">
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#128270;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-debug</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Debug toolbar and debugger for Yii2. Inspect logs, database queries,
-                        request data, and application performance in real time.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-debug',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
+    <?php if ($recent): ?>
+        <div class="rows rows--compact stagger">
+            <?php foreach ($recent as $i => $row): ?>
+                <?= $this->render('//operation/_row', ['row' => $row, 'i' => $i, 'compact' => true, 'accounts' => $accounts]) ?>
+            <?php endforeach ?>
         </div>
+    <?php else: ?>
+        <p class="muted">Операций пока нет — нажмите +, чтобы добавить первую.</p>
+    <?php endif ?>
+</section>
 
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#9881;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-gii</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Automatic code generator for models, controllers, CRUD, forms, and modules.
-                        Boost your productivity with scaffolding.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-gii',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
+<?php if ($categories): ?>
+    <section class="section">
+        <div class="section__head">
+            <h2 class="h2">Категории периода</h2>
         </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#128203;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-queue</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Asynchronous job queue with support for DB, Redis, AMQP, Beanstalk,
-                        and SQS drivers. Run background tasks with ease.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-queue',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#9889;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-redis</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Redis integration providing cache, session, and ActiveRecord support.
-                        Leverage in-memory storage for blazing-fast data access.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-redis',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#128269;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-elasticsearch</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Elasticsearch integration with ActiveRecord and query builder.
-                        Add powerful full-text search capabilities to your application.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-elasticsearch',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#9993;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-symfonymailer</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Email sending integration powered by Symfony Mailer.
-                        Compose and deliver rich HTML emails with attachments and templates.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://github.com/yiisoft/yii2-symfonymailer',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>
+        <ul class="bars">
+            <?php foreach ($categories as $cat): ?>
+                <li>
+                    <span class="bars__name"><?= yii\helpers\Html::encode($cat['name']) ?></span>
+                    <span class="bars__sum"><?= Money::html($cat['sum']) ?></span>
+                    <span class="bars__track">
+                        <span class="bars__fill" style="display:block; width: <?= $maxCategory ? round($cat['sum'] / $maxCategory * 100, 1) : 0 ?>%"></span>
+                    </span>
+                </li>
+            <?php endforeach ?>
+        </ul>
+    </section>
+<?php endif ?>

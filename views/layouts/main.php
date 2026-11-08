@@ -5,35 +5,34 @@ declare(strict_types=1);
 /** @var yii\web\View $this */
 /** @var string $content */
 
-use app\widgets\Alert;
-use yii\bootstrap5\Breadcrumbs;
 use yii\helpers\Html;
 
 $this->render('_head');
+$hideNav = !empty($this->params['hideNav']);
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
-<html lang="<?= Yii::$app->language ?>" class="h-100" data-bs-theme="light">
+<html lang="ru">
 <head>
     <?php $this->head() ?>
-    <title><?= Html::encode($this->title) ?></title>
+    <title><?= Html::encode($this->title ? $this->title . ' · Сальдо' : 'Сальдо') ?></title>
 </head>
-<body class="d-flex flex-column h-100">
+<body>
 <?php $this->beginBody() ?>
+<?= $this->render('_icons') ?>
 
-<?= $this->render('_header') ?>
-
-<main id="main" class="flex-grow-1" role="main">
-    <div class="container">
-        <?php if (!empty($this->params['breadcrumbs'])): ?>
-            <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
-        <?php endif ?>
-        <?= Alert::widget() ?>
+<div class="shell<?= $hideNav ? ' no-nav' : '' ?>" data-shell>
+    <main class="screen<?= $hideNav ? ' screen--form' : '' ?>" id="main">
         <?= $content ?>
-    </div>
-</main>
+    </main>
 
-<?= $this->render('_footer') ?>
+    <?php if (!$hideNav): ?>
+        <?= $this->render('_tabbar') ?>
+        <?= $this->render('_add-sheet') ?>
+    <?php endif ?>
+
+    <?= $this->render('_toast') ?>
+</div>
 
 <?php $this->endBody() ?>
 </body>
